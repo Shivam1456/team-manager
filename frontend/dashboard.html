@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Team Manager</title>
+  <meta name="description" content="View your task progress, project stats, and overdue tasks at a glance." />
+  <link rel="stylesheet" href="style.css?v=2" />
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🚀</div>
+      <span>Team Manager</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-label">Navigation</p>
+      <div class="nav-item active" onclick="location.href='dashboard.html'">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="location.href='projects.html'">
+        <span class="nav-icon">📁</span> Projects
+      </div>
+      <div class="nav-item" onclick="location.href='tasks.html'">
+        <span class="nav-icon">✅</span> My Tasks
+      </div>
+      <div class="nav-item" id="adminNavItem" style="display:none" onclick="location.href='admin.html'">
+        <span class="nav-icon">⚙️</span> Admin
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip" onclick="logout()">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarName">—</div>
+          <div class="user-role-text" id="sidebarRole">—</div>
+        </div>
+        <span title="Logout" style="color:var(--text-muted)">↩</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="welcomeTitle">Dashboard</h1>
+        <p class="page-subtitle" id="welcomeSub">Here's your overview for today</p>
+      </div>
+      <span id="dateDisplay" style="color:var(--text-secondary);font-size:0.85rem;"></span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-label">Total Tasks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value" id="statPending" style="color:var(--accent-yellow)">—</div>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-value" id="statInProgress" style="color:var(--accent-blue)">—</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="statCompleted" style="color:var(--accent-green)">—</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value" id="statOverdue" style="color:var(--accent-orange)">—</div>
+        <div class="stat-label">Overdue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📁</div>
+        <div class="stat-value" id="statProjects" style="color:var(--accent-purple)">—</div>
+        <div class="stat-label">Projects</div>
+      </div>
+    </div>
+
+    <!-- Progress & Recent Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:20px;margin-bottom:28px;" id="progressRow">
+      <!-- Task Completion -->
+      <div class="card">
+        <h3 style="margin-bottom:16px">📈 Task Completion</h3>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:0.85rem;color:var(--text-secondary)">Progress</span>
+          <span style="font-size:0.85rem;font-weight:600;" id="completionPct">0%</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="completionBar" style="width:0%"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+          <div style="font-size:0.8rem;color:var(--text-secondary)">
+            <span style="color:var(--accent-yellow)">●</span> Pending: <b id="lb1">0</b>
+          </div>
+          <div style="font-size:0.8rem;color:var(--text-secondary)">
+            <span style="color:var(--accent-blue)">●</span> In Progress: <b id="lb2">0</b>
+          </div>
+          <div style="font-size:0.8rem;color:var(--text-secondary)">
+            <span style="color:var(--accent-green)">●</span> Completed: <b id="lb3">0</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <h3 style="margin-bottom:16px">⚡ Quick Actions</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-secondary w-full" onclick="location.href='tasks.html'">
+            📋 View My Tasks
+          </button>
+          <button class="btn btn-secondary w-full" onclick="location.href='projects.html'">
+            📁 Browse Projects
+          </button>
+          <button class="btn btn-primary w-full" id="adminQuickBtn" style="display:none" onclick="location.href='admin.html'">
+            ⚙️ Admin Panel
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Tasks -->
+      <div class="table-wrapper" style="margin-bottom: 0;">
+        <div class="table-header-bar">
+          <h3>🕐 Recent Tasks</h3>
+          <a href="tasks.html" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div id="recentTasksBody">
+          <div class="empty-state">
+            <div class="spinner" style="width:28px;height:28px;margin:0 auto 12px;border-color:rgba(255,255,255,0.1);border-top-color:var(--accent-blue);"></div>
+            <p>Loading tasks...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth();
+  if (!user) throw new Error('not auth');
+
+  // Setup sidebar
+  document.getElementById('sidebarAvatar').textContent = getInitials(user.name);
+  document.getElementById('sidebarName').textContent = user.name;
+  document.getElementById('sidebarRole').textContent = user.role;
+  document.getElementById('welcomeTitle').textContent = `Welcome back, ${user.name.split(' ')[0]}! 👋`;
+  document.getElementById('welcomeSub').textContent = user.role === 'admin'
+    ? 'Admin dashboard — full system overview'
+    : 'Your personal task & project overview';
+  document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  if (user.role === 'admin') {
+    document.getElementById('adminNavItem').style.display = 'flex';
+    document.getElementById('adminQuickBtn').style.display = 'flex';
+  }
+
+  async function loadDashboard() {
+    try {
+      const [stats, tasks] = await Promise.all([API.getDashboard(), API.getMyTasks()]);
+
+      document.getElementById('statTotal').textContent     = stats.total_tasks;
+      document.getElementById('statPending').textContent   = stats.pending;
+      document.getElementById('statInProgress').textContent= stats.in_progress;
+      document.getElementById('statCompleted').textContent = stats.completed;
+      document.getElementById('statOverdue').textContent   = stats.overdue;
+      document.getElementById('statProjects').textContent  = stats.projects_count;
+
+      document.getElementById('lb1').textContent = stats.pending;
+      document.getElementById('lb2').textContent = stats.in_progress;
+      document.getElementById('lb3').textContent = stats.completed;
+
+      const pct = stats.total_tasks ? Math.round((stats.completed / stats.total_tasks) * 100) : 0;
+      document.getElementById('completionPct').textContent = pct + '%';
+      document.getElementById('completionBar').style.width = pct + '%';
+
+      // Recent 5 tasks
+      const recent = tasks.slice(0, 5);
+      const tbody = document.getElementById('recentTasksBody');
+      if (!recent.length) {
+        tbody.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No tasks assigned yet.</p></div>`;
+      } else {
+        tbody.innerHTML = `
+          <table>
+            <thead><tr>
+              <th>Task</th><th>Project</th><th>Status</th><th>Deadline</th>
+            </tr></thead>
+            <tbody>
+              ${recent.map(t => `
+                <tr onclick="location.href='tasks.html'" style="cursor:pointer">
+                  <td>${t.title}</td>
+                  <td style="color:var(--text-secondary)">${t.project?.name || '—'}</td>
+                  <td>${statusBadge(t.status, t.deadline)}</td>
+                  <td style="color:${isOverdue(t.deadline,t.status)?'var(--accent-orange)':'var(--text-secondary)'}">${formatDate(t.deadline)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
+    } catch (err) {
+      showToast('Failed to load dashboard: ' + err.message, 'error');
+    }
+  }
+
+  function statusBadge(status, deadline) {
+    if (isOverdue(deadline, status)) return `<span class="badge badge-overdue">🔥 Overdue</span>`;
+    const map = {
+      pending: '<span class="badge badge-pending">⏳ Pending</span>',
+      in_progress: '<span class="badge badge-in_progress">🔄 In Progress</span>',
+      completed: '<span class="badge badge-completed">✅ Completed</span>',
+    };
+    return map[status] || status;
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

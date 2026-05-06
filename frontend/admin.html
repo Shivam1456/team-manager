@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Team Manager</title>
+  <meta name="description" content="Admin panel to manage users, projects, and tasks." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🚀</div>
+      <span>Team Manager</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-label">Navigation</p>
+      <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="location.href='projects.html'"><span class="nav-icon">📁</span> Projects</div>
+      <div class="nav-item" onclick="location.href='tasks.html'"><span class="nav-icon">✅</span> Tasks</div>
+      <div class="nav-item active" onclick="location.href='admin.html'"><span class="nav-icon">⚙️</span> Admin</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip" onclick="logout()">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarName">—</div>
+          <div class="user-role-text" id="sidebarRole">—</div>
+        </div>
+        <span style="color:var(--text-muted)">↩</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">⚙️ Admin Panel</h1>
+        <p class="page-subtitle">Manage all users, projects, and tasks</p>
+      </div>
+      <span class="badge badge-admin">Admin Only</span>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-wrapper" style="margin-bottom:28px;">
+      <div class="table-header-bar">
+        <h3>👥 All Users</h3>
+        <span id="usersCount" style="color:var(--text-secondary);font-size:0.85rem;"></span>
+      </div>
+      <div id="usersBody">
+        <div class="empty-state">
+          <div class="spinner" style="width:28px;height:28px;margin:0 auto 12px;border-color:rgba(255,255,255,0.1);border-top-color:var(--accent-blue);"></div>
+          <p>Loading users...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects Summary -->
+    <div class="table-wrapper" style="margin-bottom:28px;">
+      <div class="table-header-bar">
+        <h3>📁 All Projects</h3>
+        <button class="btn btn-primary btn-sm" onclick="location.href='projects.html'">Manage Projects</button>
+      </div>
+      <div id="projectsBody">
+        <div class="empty-state">
+          <div class="spinner" style="width:28px;height:28px;margin:0 auto 12px;border-color:rgba(255,255,255,0.1);border-top-color:var(--accent-blue);"></div>
+          <p>Loading projects...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Tasks -->
+    <div class="table-wrapper">
+      <div class="table-header-bar">
+        <h3>✅ All Tasks</h3>
+        <button class="btn btn-primary btn-sm" onclick="location.href='tasks.html'">Manage Tasks</button>
+      </div>
+      <div id="allTasksBody">
+        <div class="empty-state">
+          <div class="spinner" style="width:28px;height:28px;margin:0 auto 12px;border-color:rgba(255,255,255,0.1);border-top-color:var(--accent-blue);"></div>
+          <p>Loading tasks...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth();
+  if (user.role !== 'admin') {
+    showToast('Admin access required!', 'error');
+    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+  }
+
+  document.getElementById('sidebarAvatar').textContent = getInitials(user.name);
+  document.getElementById('sidebarName').textContent = user.name;
+  document.getElementById('sidebarRole').textContent = user.role;
+
+  async function loadAdminData() {
+    try {
+      const [users, projects, tasks] = await Promise.all([
+        API.getUsers(), API.getProjects(), API.getMyTasks()
+      ]);
+
+      // Users
+      document.getElementById('usersCount').textContent = `${users.length} user${users.length !== 1 ? 's' : ''}`;
+      document.getElementById('usersBody').innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Email</th><th>Role</th><th>Joined</th>
+          </tr></thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="user-avatar" style="width:30px;height:30px;font-size:0.75rem;">${getInitials(u.name)}</div>
+                    <span style="font-weight:500">${u.name}</span>
+                  </div>
+                </td>
+                <td style="color:var(--text-secondary)">${u.email}</td>
+                <td><span class="badge badge-${u.role}">${u.role}</span></td>
+                <td style="color:var(--text-secondary)">${formatDate(u.created_at)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+
+      // Projects
+      document.getElementById('projectsBody').innerHTML = projects.length
+        ? `<table>
+            <thead><tr><th>Project</th><th>Description</th><th>Members</th><th>Tasks</th><th>Created</th></tr></thead>
+            <tbody>
+              ${projects.map(p => `
+                <tr>
+                  <td style="font-weight:500">${p.name}</td>
+                  <td style="color:var(--text-secondary)">${p.description || '—'}</td>
+                  <td>${p.members.length}</td>
+                  <td>${p.tasks.length}</td>
+                  <td style="color:var(--text-secondary)">${formatDate(p.created_at)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`
+        : `<div class="empty-state"><div class="empty-icon">📭</div><p>No projects yet.</p></div>`;
+
+      // Tasks
+      document.getElementById('allTasksBody').innerHTML = tasks.length
+        ? `<table>
+            <thead><tr><th>Task</th><th>Project</th><th>Assignee</th><th>Status</th><th>Deadline</th></tr></thead>
+            <tbody>
+              ${tasks.map(t => {
+                const overdue = isOverdue(t.deadline, t.status);
+                return `<tr>
+                  <td style="font-weight:500">${t.title}</td>
+                  <td style="color:var(--text-secondary)">${t.project?.name || '—'}</td>
+                  <td>${t.assignee?.name || '—'}</td>
+                  <td>${statusBadge(t.status, t.deadline)}</td>
+                  <td style="color:${overdue?'var(--accent-orange)':'var(--text-secondary)'}">${formatDate(t.deadline)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>`
+        : `<div class="empty-state"><div class="empty-icon">📭</div><p>No tasks yet.</p></div>`;
+
+    } catch (e) {
+      showToast('Failed to load admin data: ' + e.message, 'error');
+    }
+  }
+
+  function statusBadge(status, deadline) {
+    if (isOverdue(deadline, status)) return `<span class="badge badge-overdue">🔥 Overdue</span>`;
+    const map = {
+      pending: '<span class="badge badge-pending">⏳ Pending</span>',
+      in_progress: '<span class="badge badge-in_progress">🔄 In Progress</span>',
+      completed: '<span class="badge badge-completed">✅ Completed</span>',
+    };
+    return map[status] || status;
+  }
+
+  loadAdminData();
+</script>
+</body>
+</html>

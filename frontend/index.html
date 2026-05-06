@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Manager — Login</title>
+  <meta name="description" content="Login or create an account on Team Manager to manage your projects and tasks." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="auth-page" id="authPage">
+  <div class="auth-bg-orb orb1"></div>
+  <div class="auth-bg-orb orb2"></div>
+
+  <div class="auth-card">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🚀</div>
+      <div class="auth-logo-text">
+        <h1>Team Manager</h1>
+        <p>Collaborate. Track. Deliver.</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Error -->
+    <div class="auth-error" id="authError"></div>
+
+    <!-- ── LOGIN FORM ── -->
+    <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="loginEmail">Email address</label>
+        <input id="loginEmail" type="email" class="form-control" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" class="form-control" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-full" id="loginBtn">
+        Sign In
+      </button>
+      <p class="auth-divider">Don't have an account? <a href="#" onclick="switchTab('signup')">Sign Up</a></p>
+    </form>
+
+    <!-- ── SIGNUP FORM ── -->
+    <form class="auth-form hidden" id="signupForm" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label for="signupName">Full Name</label>
+        <input id="signupName" type="text" class="form-control" placeholder="John Doe" required />
+      </div>
+      <div class="form-group">
+        <label for="signupEmail">Email address</label>
+        <input id="signupEmail" type="email" class="form-control" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label for="signupPassword">Password <span style="color:var(--text-muted)">(min 6 chars)</span></label>
+        <input id="signupPassword" type="password" class="form-control" placeholder="••••••••" required minlength="6" />
+      </div>
+      <div class="form-group">
+        <label for="signupRole">Role</label>
+        <select id="signupRole" class="form-control">
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-full" id="signupBtn">
+        Create Account
+      </button>
+      <p class="auth-divider">Already have an account? <a href="#" onclick="switchTab('login')">Login</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="api.js"></script>
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem('tm_token')) {
+    window.location.href = 'dashboard.html';
+  }
+
+  function switchTab(tab) {
+    document.getElementById('authError').classList.remove('show');
+    if (tab === 'login') {
+      document.getElementById('tabLogin').classList.add('active');
+      document.getElementById('tabSignup').classList.remove('active');
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('signupForm').classList.add('hidden');
+    } else {
+      document.getElementById('tabSignup').classList.add('active');
+      document.getElementById('tabLogin').classList.remove('active');
+      document.getElementById('signupForm').classList.remove('hidden');
+      document.getElementById('loginForm').classList.add('hidden');
+    }
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    btn.innerHTML = '<span class="spinner"></span> Signing in...';
+    btn.disabled = true;
+
+    try {
+      const data = await API.login(email, password);
+      localStorage.setItem('tm_token', data.access_token);
+      localStorage.setItem('tm_user', JSON.stringify(data.user));
+      showToast('Welcome back, ' + data.user.name + '! 🎉', 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 600);
+    } catch (err) {
+      showAuthError(err.message || 'Login failed. Check your credentials.');
+      btn.innerHTML = 'Sign In';
+      btn.disabled = false;
+    }
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    const btn = document.getElementById('signupBtn');
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const role = document.getElementById('signupRole').value;
+
+    btn.innerHTML = '<span class="spinner"></span> Creating account...';
+    btn.disabled = true;
+
+    try {
+      const data = await API.signup(name, email, password, role);
+      localStorage.setItem('tm_token', data.access_token);
+      localStorage.setItem('tm_user', JSON.stringify(data.user));
+      showToast('Account created! Welcome, ' + data.user.name + '! 🚀', 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 600);
+    } catch (err) {
+      showAuthError(err.message || 'Signup failed. Please try again.');
+      btn.innerHTML = 'Create Account';
+      btn.disabled = false;
+    }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = '⚠️ ' + msg;
+    el.classList.add('show');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects — Team Manager</title>
+  <meta name="description" content="Browse and manage your projects. Add members and track tasks." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🚀</div>
+      <span>Team Manager</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-label">Navigation</p>
+      <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item active" onclick="location.href='projects.html'"><span class="nav-icon">📁</span> Projects</div>
+      <div class="nav-item" onclick="location.href='tasks.html'"><span class="nav-icon">✅</span> My Tasks</div>
+      <div class="nav-item" id="adminNavItem" style="display:none" onclick="location.href='admin.html'"><span class="nav-icon">⚙️</span> Admin</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip" onclick="logout()">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarName">—</div>
+          <div class="user-role-text" id="sidebarRole">—</div>
+        </div>
+        <span style="color:var(--text-muted)">↩</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">📁 Projects</h1>
+        <p class="page-subtitle" id="projectSubtitle">Your assigned projects</p>
+      </div>
+      <button class="btn btn-primary" id="createProjectBtn" style="display:none" onclick="openCreateProject()">
+        + New Project
+      </button>
+    </div>
+
+    <!-- Projects Grid -->
+    <div id="projectsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+      <div class="card" style="display:flex;align-items:center;justify-content:center;min-height:120px;">
+        <div class="spinner" style="width:28px;height:28px;border-color:rgba(255,255,255,0.1);border-top-color:var(--accent-blue);"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Create Project Modal -->
+<div class="modal-overlay" id="createProjectModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🆕 New Project</h2>
+      <button class="modal-close" onclick="closeModal('createProjectModal')">✕</button>
+    </div>
+    <form class="modal-form" onsubmit="submitCreateProject(event)">
+      <div class="form-group">
+        <label>Project Name *</label>
+        <input id="pName" class="form-control" placeholder="e.g. Website Redesign" required />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="pDesc" class="form-control" rows="3" placeholder="Brief description..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('createProjectModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="createProjectSubmitBtn">Create Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Members Modal -->
+<div class="modal-overlay" id="membersModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">👥 Manage Members</h2>
+      <button class="modal-close" onclick="closeModal('membersModal')">✕</button>
+    </div>
+    <div id="membersList" style="margin-bottom:16px;"></div>
+    <div class="form-group" id="addMemberSection">
+      <label>Add Member</label>
+      <select id="addMemberSelect" class="form-control">
+        <option value="">Select user...</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('membersModal')">Close</button>
+      <button class="btn btn-primary" id="addMemberBtn" onclick="addMemberToProject()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="api.js"></script>
+<script>
+const user = requireAuth();
+let projects = [];
+let allUsers = [];
+let currentProjectId = null;
+
+// Sidebar
+document.getElementById('sidebarAvatar').textContent = getInitials(user.name);
+document.getElementById('sidebarName').textContent = user.name;
+document.getElementById('sidebarRole').textContent = user.role;
+if (user.role === 'admin') {
+  document.getElementById('createProjectBtn').style.display = 'flex';
+  document.getElementById('adminNavItem').style.display = 'flex';
+  document.getElementById('projectSubtitle').textContent = 'All projects — Admin view';
+}
+
+async function loadAll() {
+  try {
+    [projects, allUsers] = await Promise.all([API.getProjects(), API.getUsers()]);
+    renderProjects();
+  } catch (e) {
+    showToast('Failed to load projects: ' + e.message, 'error');
+  }
+}
+
+function renderProjects() {
+  const container = document.getElementById('projectsContainer');
+  if (!projects.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No projects found. ${user.role === 'admin' ? 'Create one!' : 'Ask your admin.'}</p></div>`;
+    return;
+  }
+  container.innerHTML = projects.map(p => `
+    <div class="card" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div>
+          <h3 style="margin-bottom:4px">${p.name}</h3>
+          <p style="color:var(--text-secondary);font-size:0.82rem;">${p.description || 'No description'}</p>
+        </div>
+        <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${formatDate(p.created_at)}</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:0.8rem;color:var(--text-secondary)">👥 ${p.members.length} members</span>
+        <span style="font-size:0.8rem;color:var(--text-secondary)">✅ ${p.tasks.length} tasks</span>
+      </div>
+      <div class="members-list">
+        ${p.members.slice(0,5).map(m => `
+          <div class="member-chip">
+            <div class="avatar-xs">${getInitials(m.name)}</div>
+            ${m.name}
+          </div>`).join('')}
+        ${p.members.length > 5 ? `<span class="badge badge-member">+${p.members.length - 5} more</span>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+        <button class="btn btn-secondary btn-sm" onclick="location.href='tasks.html?project=${p.id}'">View Tasks</button>
+        ${user.role === 'admin' ? `
+          <button class="btn btn-secondary btn-sm" onclick="openMembersModal(${p.id})">Manage Members</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id})">Delete</button>
+        ` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ── Create Project ──
+function openCreateProject() { openModal('createProjectModal'); }
+async function submitCreateProject(e) {
+  e.preventDefault();
+  const btn = document.getElementById('createProjectSubmitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Creating...'; btn.disabled = true;
+  try {
+    const p = await API.createProject(document.getElementById('pName').value, document.getElementById('pDesc').value);
+    projects.unshift(p);
+    renderProjects();
+    closeModal('createProjectModal');
+    e.target.reset();
+    showToast('Project created! 🎉', 'success');
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.innerHTML = 'Create Project'; btn.disabled = false; }
+}
+
+// ── Delete Project ──
+async function deleteProject(id) {
+  if (!confirm('Delete this project and all its tasks?')) return;
+  try {
+    await API.deleteProject(id);
+    projects = projects.filter(p => p.id !== id);
+    renderProjects();
+    showToast('Project deleted.', 'info');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ── Members Modal ──
+function openMembersModal(projectId) {
+  currentProjectId = projectId;
+  const project = projects.find(p => p.id === projectId);
+  renderMembersModal(project);
+  populateMemberSelect(project);
+  openModal('membersModal');
+}
+
+function renderMembersModal(project) {
+  document.getElementById('membersList').innerHTML = project.members.length
+    ? `<div class="members-list" style="flex-direction:column;gap:8px;">
+        ${project.members.map(m => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius-sm);">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="user-avatar" style="width:30px;height:30px;font-size:0.75rem;">${getInitials(m.name)}</div>
+              <div>
+                <div style="font-size:0.875rem;font-weight:500;">${m.name}</div>
+                <div style="font-size:0.75rem;color:var(--text-secondary)">${m.email}</div>
+              </div>
+            </div>
+            <span class="badge badge-${m.role}">${m.role}</span>
+            ${user.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="removeMember(${project.id},${m.id})">Remove</button>` : ''}
+          </div>`).join('')}
+      </div>`
+    : '<p style="color:var(--text-secondary);font-size:0.875rem;">No members yet.</p>';
+}
+
+function populateMemberSelect(project) {
+  const memberIds = project.members.map(m => m.id);
+  const available = allUsers.filter(u => !memberIds.includes(u.id));
+  const sel = document.getElementById('addMemberSelect');
+  sel.innerHTML = '<option value="">Select user...</option>' +
+    available.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('');
+}
+
+async function addMemberToProject() {
+  const userId = parseInt(document.getElementById('addMemberSelect').value);
+  if (!userId) return showToast('Select a user first', 'error');
+  try {
+    const updated = await API.addMember(currentProjectId, userId);
+    const idx = projects.findIndex(p => p.id === currentProjectId);
+    projects[idx] = updated;
+    renderProjects();
+    renderMembersModal(updated);
+    populateMemberSelect(updated);
+    showToast('Member added!', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function removeMember(projectId, userId) {
+  try {
+    const updated = await API.removeMember(projectId, userId);
+    const idx = projects.findIndex(p => p.id === projectId);
+    projects[idx] = updated;
+    renderProjects();
+    renderMembersModal(updated);
+    populateMemberSelect(updated);
+    showToast('Member removed.', 'info');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ── Modal helpers ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+loadAll();
+</script>
+</body>
+</html>
