@@ -4,6 +4,31 @@ A complete **Team Task Manager** with Role-Based Access Control, built with:
 - **Backend**: Python + FastAPI + SQLite
 - **Frontend**: HTML + CSS + Vanilla JS
 
+https://team-manager-khaki.vercel.app/dashboard.html
+
+<img width="1920" height="1080" alt="Screenshot (51)" src="https://github.com/user-attachments/assets/f90662d1-5b76-4a94-8451-22c5ecaa45e0" />
+<img width="1920" height="1080" alt="Screenshot (59)" src="https://github.com/user-attachments/assets/81bae6ac-72a8-4da8-acd2-5342f97a7861" />
+<img width="1920" height="1080" alt="Screenshot (58)" src="https://github.com/user-attachments/assets/fa843ba1-578f-4670-9bbc-ff8b79354760" />
+<img width="1920" height="1080" alt="Screenshot (57)" src="https://github.com/user-attachments/assets/5b82d6d2-9e7f-4648-99a1-2186b4bb8497" />
+<img width="1920" height="1080" alt="Screenshot (56)" src="https://github.com/user-attachments/assets/f795c3c1-2fa4-43a5-bd68-76d38ae04ba4" />
+<img width="1920" height="1080" alt="Screenshot (55)" src="https://github.com/user-attachments/assets/9c37f9b9-32ce-4e19-b22f-20edc35f0cbd" />
+<img width="1920" height="1080" alt="Screenshot (54)" src="https://github.com/user-attachments/assets/95cca907-35f8-4a5d-ac20-bb5b095f25ee" />
+<img width="1920" height="1080" alt="Screenshot (53)" src="https://github.com/user-attachments/assets/953b8fe5-5f62-4780-88a0-6257c9403164" />
+<img width="1920" height="1080" alt="Screenshot (52)" src="https://github.com/user-attachments/assets/82135c64-9b7b-4f5e-bf6f-f0c2142c1e4b" />
+<img width="1920" height="1080" alt="Screenshot (50)" src="https://github.com/user-attachments/assets/e580b775-082d-425a-8c50-85b8e1c26fab" />
+<img width="1920" height="1080" alt="Screenshot (49)" src="https://github.com/user-attachments/assets/c2b17abd-1c3b-4610-ab8f-7899248817bf" />
+
+
+
+
+
+
+
+
+
+
+
+
 ---
 
 ## 📂 Project Structure
